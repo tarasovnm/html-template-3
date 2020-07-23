@@ -11,7 +11,7 @@ let path = {
     fonts: project_folder + "/fonts/",
   },
   src: {
-    html: source_folder + "/*.html",
+    html: [source_folder + "/*.html", "!" + source_folder + "/_*.html"],
     css: source_folder + "/scss/style.scss",
     js: source_folder + "/js/script.js",
     img: source_folder + "/img/**/*.{jpg,png,svg,gif,ico,webp}",
@@ -28,7 +28,14 @@ let path = {
 
 let { src, dest } = require('gulp'),
   gulp = require('gulp'),
-  browsersync = require('browser-sync').create();
+  browsersync = require('browser-sync').create(),
+  fileinclude = require('gulp-file-include'),
+  del = require('del'),
+  scss = require('gulp-sass'),
+  autoprefixer = require('gulp-autoprefixer'),
+  group_media = require('gulp-group-css-media-queries'),
+  clean_css = require('gulp-clean-css'),
+  rename = require('gulp-rename');
 
 function browserSync(params) {
   browsersync.init({
@@ -42,13 +49,49 @@ function browserSync(params) {
 
 function html() {
   return src(path.src.html)
+    .pipe(fileinclude())
     .pipe(dest(path.build.html))
     .pipe(browsersync.stream())
 }
 
-let build = gulp.series(html);
-let watch = gulp.parallel(build, browserSync);
+function css() {
+  return src(path.src.css)
+    .pipe(
+      scss({
+        outputStyle: "expanded"
+      }))
+    .pipe(
+      group_media()
+    )
+    .pipe(
+      autoprefixer({
+        overrideBrowserslist: ["last 5 versions"],
+        cascade: true
+      }))
+    .pipe(dest(path.build.css))
+    .pipe(clean_css())
+    .pipe(
+      rename({
+        extname: ".min.css"
+      })
+    )
+    .pipe(dest(path.build.css))
+    .pipe(browsersync.stream())
+}
 
+function watchFiles(params) {
+  gulp.watch([path.watch.html], html);
+  gulp.watch([path.watch.css], css);
+}
+
+function clean(params) {
+  return del(path.clean);
+}
+
+let build = gulp.series(clean, gulp.parallel(css, html));
+let watch = gulp.parallel(build, watchFiles, browserSync);
+
+exports.css = css;
 exports.html = html;
 exports.build = build;
 exports.watch = watch;
