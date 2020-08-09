@@ -16,7 +16,7 @@ let path = {
     css: [source_folder + "/scss/style.scss", source_folder + "/scss/normalize.scss"],
     js: source_folder + "/js/script.js",
     img: source_folder + "/img/**/*.{jpg,png,svg,gif,ico,webp}",
-    fonts: source_folder + "/fonts/*.ttf",
+    fonts: [source_folder + "/fonts/*.woff", source_folder + "/fonts/*.woff2"],
   },
   watch: {
     html: source_folder + "/**/*.html",
@@ -112,6 +112,11 @@ function images() {
     .pipe(browsersync.stream())
 }
 
+function fonts() {
+  return src(path.src.fonts)
+    .pipe(dest(path.build.fonts))
+}
+
 function watchFiles(params) {
   gulp.watch([path.watch.html], html);
   gulp.watch([path.watch.css], css);
@@ -125,9 +130,10 @@ function clean(params) {
 
 // ====== Таски ===========================================================
 
-let build = gulp.series(clean, gulp.parallel(js, css, html, images));
+let build = gulp.series(clean, gulp.parallel(js, css, html, images, fonts));
 let watch = gulp.parallel(build, watchFiles, browserSync);
 
+exports.fonts = fonts;
 exports.images = images;
 exports.js = js;
 exports.css = css;
