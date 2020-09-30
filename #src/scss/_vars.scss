@@ -1,1 +1,7 @@
 $default-font: "Calibri", sans-serif;
+
+// добавлять через @extend %...
+%calibri-normal {
+  font-family: "Calibri", sans-serif;
+  font-weight: 400;
+}
